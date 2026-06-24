@@ -427,3 +427,58 @@ tr:hover td { background: rgba(245,197,24,0.04); }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ===== スマホ対応（追加修正） ===== */
+@media (max-width: 768px) {
+
+  /* ヘッダー */
+  .header { padding: 0 14px; }
+  .header-logo { font-size: 14px; }
+
+  /* ナビ */
+  .nav { padding: 0 8px; }
+  .nav-btn { padding: 12px 10px; font-size: 12px; }
+
+  /* メイン */
+  .main { padding: 16px 12px; }
+
+  /* KPIグリッド：2列 */
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-value { font-size: 20px; }
+
+  /* フォームグリッド：1列 */
+  .form-grid { grid-template-columns: 1fr; }
+
+  /* フィルターバー縦並び */
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar > div { width: 100%; }
+
+  /* チャートコントロール */
+  .chart-controls { gap: 6px; }
+
+  /* ルート最適化：マップを下に */
+  #page-route .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  /* マップの高さをスマホ用に縮小 */
+  #route-map { height: 300px !important; }
+
+  /* 比較カード */
+  .compare-result { grid-template-columns: 1fr; gap: 8px; }
+  .compare-vs { display: none; }
+  .compare-amount { font-size: 22px; }
+
+  /* テーブル：横スクロール確保 */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 480px; }
+
+  /* カード */
+  .card { padding: 14px; }
+
+  /* チャートコンテナ高さ縮小 */
+  .chart-container { height: 240px; }
+
+  /* 地域分析グラフを縦並び */
+  #page-analysis .grid-2 { grid-template-columns: 1fr; }
+}
