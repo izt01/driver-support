@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driver Support - タクシー運転手サポート</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="config.js"></script>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header class="header">
+  <div class="header-logo">
+    <div class="icon">🚕</div>
+    Driver Support
+  </div>
+  <div style="font-size:12px;color:var(--muted)" id="header-date"></div>
+</header>
+
+<!-- ナビゲーション -->
+<nav class="nav">
+  <button class="nav-btn active" data-page="sales" onclick="showPage('sales')">📊 売上管理</button>
+  <button class="nav-btn" data-page="rides" onclick="showPage('rides')">🗺️ 乗降記録</button>
+  <button class="nav-btn" data-page="analysis" onclick="showPage('analysis')">📈 地域分析</button>
+  <button class="nav-btn" data-page="route" onclick="showPage('route')">🧭 ルート最適化</button>
+</nav>
+
+<main class="main">
+
+  <!-- ======== 売上管理ページ ======== -->
+  <div class="page active" id="page-sales">
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">今月の売上</div>
+        <div class="kpi-value" id="kpi-month-total">¥---</div>
+        <div class="kpi-sub">当月累計</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">出勤日数</div>
+        <div class="kpi-value" id="kpi-month-days" style="color:var(--accent2)">---</div>
+        <div class="kpi-sub">今月</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">日平均売上</div>
+        <div class="kpi-value" id="kpi-month-avg" style="color:var(--success)">¥---</div>
+        <div class="kpi-sub">今月</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">前月比</div>
+        <div class="kpi-value" id="kpi-month-diff">---</div>
+        <div class="kpi-sub">先月との差額</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- 売上グラフ -->
+      <div class="card">
+        <div class="card-title">月別売上推移</div>
+        <div class="chart-controls">
+          <button class="chart-type-btn active" onclick="setSalesChartType('bar',this)">棒グラフ</button>
+          <button class="chart-type-btn" onclick="setSalesChartType('line',this)">折れ線</button>
+          <button class="chart-type-btn" onclick="setSalesChartType('pie',this)">円グラフ</button>
+        </div>
+        <div class="chart-container">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 期間比較 -->
+      <div class="card">
+        <div class="card-title">期間比較</div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">期間①</div>
+          <div style="display:flex;gap:8px">
+            <input type="date" id="p1-start" class="form-group input" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:13px;flex:1">
+            <span style="color:var(--muted);line-height:36px">〜</span>
+            <input type="date" id="p1-end" class="form-group input" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:13px;flex:1">
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">期間②</div>
+          <div style="display:flex;gap:8px">
+            <input type="date" id="p2-start" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:13px;flex:1">
+            <span style="color:var(--muted);line-height:36px">〜</span>
+            <input type="date" id="p2-end" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px;font-size:13px;flex:1">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="comparePeriods()" style="width:100%">比較する</button>
+        <div id="compare-result"></div>
+      </div>
+    </div>
+
+    <!-- 売上入力 -->
+    <div class="card">
+      <div class="card-title">売上を登録</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>日付</label>
+          <input type="date" id="sale-date">
+        </div>
+        <div class="form-group">
+          <label>売上金額（円）</label>
+          <input type="number" id="sale-amount" placeholder="例: 45000" min="0">
+        </div>
+        <div class="form-group">
+          <label>メモ</label>
+          <input type="text" id="sale-memo" placeholder="例: 深夜あり、雨の日など">
+        </div>
+        <div class="form-group" style="justify-content:flex-end">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary" onclick="addSale()">✚ 登録</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 売上一覧 -->
+    <div class="card">
+      <div class="card-title">売上一覧</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px">
+        <div class="form-group" style="margin:0">
+          <label>開始日</label>
+          <input type="date" id="sales-start">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>終了日</label>
+          <input type="date" id="sales-end">
+        </div>
+        <button class="btn btn-secondary" onclick="loadSalesList()">絞り込む</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>日付</th><th>売上</th><th>メモ</th><th></th></tr>
+          </thead>
+          <tbody id="sales-tbody">
+            <tr><td colspan="4" class="loading">読み込み中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== 乗降記録ページ ======== -->
+  <div class="page" id="page-rides">
+
+    <!-- 入力フォーム -->
+    <div class="card">
+      <div class="card-title">乗降記録を登録</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>日付</label>
+          <input type="date" id="ride-date">
+        </div>
+        <div class="form-group">
+          <label>乗車地（住所・駅名）</label>
+          <input type="text" id="pickup-address" placeholder="例: 渋谷駅、新宿3丁目">
+        </div>
+        <div class="form-group">
+          <label>降車地（住所・駅名）</label>
+          <input type="text" id="dropoff-address" placeholder="例: 羽田空港第1ターミナル">
+        </div>
+        <div class="form-group">
+          <label>料金（円）</label>
+          <input type="number" id="ride-fare" placeholder="例: 2400" min="0">
+        </div>
+        <div class="form-group">
+          <label>乗客数</label>
+          <input type="number" id="ride-pax" value="1" min="1" max="9">
+        </div>
+        <div class="form-group">
+          <label>メモ</label>
+          <input type="text" id="ride-memo" placeholder="例: 深夜割増">
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="addRide()">✚ 登録</button>
+        <span style="font-size:12px;color:var(--muted);margin-left:12px">住所はGoogleマップで自動検索・市区町村を自動判定します</span>
+      </div>
+    </div>
+
+    <!-- 一覧 -->
+    <div class="card">
+      <div class="card-title">乗降記録一覧</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px">
+        <div class="form-group" style="margin:0">
+          <label>開始日</label>
+          <input type="date" id="ride-start">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>終了日</label>
+          <input type="date" id="ride-end">
+        </div>
+        <button class="btn btn-secondary" onclick="loadRidesList()">絞り込む</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>日付</th><th>乗車地</th><th>降車地</th><th>料金</th><th>人数</th><th></th></tr>
+          </thead>
+          <tbody id="rides-tbody">
+            <tr><td colspan="6" class="loading">読み込み中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== 地域分析ページ ======== -->
+  <div class="page" id="page-analysis">
+
+    <div class="filter-bar">
+      <div class="form-group" style="margin:0">
+        <label>開始日</label>
+        <input type="date" id="analysis-start">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>終了日</label>
+        <input type="date" id="analysis-end">
+      </div>
+      <button class="btn btn-secondary" onclick="loadRegionStats()">絞り込む</button>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="chart-type-btn active" onclick="setRegionChartType('pie',this)">円グラフ</button>
+        <button class="chart-type-btn" onclick="setRegionChartType('bar',this)">棒グラフ</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">乗車地の地域分布</div>
+        <div class="chart-container">
+          <canvas id="regionPickupChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">降車地の地域分布</div>
+        <div class="chart-container">
+          <canvas id="regionDropoffChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">地域別ランキング</div>
+      <div id="region-ranking" class="loading">データを読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- ======== ルート最適化ページ ======== -->
+  <div class="page" id="page-route">
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-title">乗客を追加</div>
+          <div id="passenger-forms"></div>
+          <div style="margin-top:14px;display:flex;gap:10px">
+            <button class="btn btn-secondary" onclick="addPassenger()">✚ 乗客を追加</button>
+            <button class="btn btn-primary" onclick="optimizeRoute()">🧭 ルートを最適化</button>
+          </div>
+        </div>
+
+        <div class="card" id="route-result-card" style="display:none">
+          <div class="card-title">最適ルート</div>
+          <div id="route-result"></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div id="route-map" style="height:500px;border-radius:var(--radius)"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- トースト通知 -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // 日付表示
+  document.getElementById('header-date').textContent =
+    new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+
+  // チャートタイプ切替（売上）
+  function setSalesChartType(type, btn) {
+    salesChartType = type;
+    document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadMonthlySales();
+  }
+
+  // チャートタイプ切替（地域）
+  function setRegionChartType(type, btn) {
+    regionChartType = type;
+    // 地域分析ページ内のボタンのみ
+    document.querySelectorAll('#page-analysis .chart-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadRegionStats();
+  }
+</script>
+
+<!-- Google Maps API（非同期ロード） -->
+<script>
+  function loadGoogleMaps() {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.defer = true;
+    document.head.appendChild(script);
+  }
+  loadGoogleMaps();
+</script>
+
+<script src="js/app.js"></script>
+</body>
+</html>
