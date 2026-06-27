@@ -157,7 +157,10 @@ function renderTutorial() {
         <div class="tutorial-dots">${dots}</div>
       </div>
       <div class="tutorial-footer">
-        <button class="tutorial-skip" onclick="closeTutorial()">スキップ</button>
+        <label class="tutorial-no-show">
+          <input type="checkbox" id="tutorial-no-show-check" ${localStorage.getItem(TUTORIAL_KEY) ? 'checked' : ''} onchange="toggleNoShow(this.checked)">
+          <span>以降は表示しない</span>
+        </label>
         <div class="tutorial-nav">
           ${!isFirst ? `<button class="tutorial-prev" onclick="tutorialPrev()">← 戻る</button>` : ''}
           <button class="tutorial-next" onclick="${isLast ? 'closeTutorial()' : 'tutorialNext()'}">
@@ -186,14 +189,27 @@ function tutorialPrev() {
   }
 }
 
+function toggleNoShow(checked) {
+  if (checked) {
+    localStorage.setItem(TUTORIAL_KEY, '1');
+  } else {
+    localStorage.removeItem(TUTORIAL_KEY);
+  }
+}
+
 function closeTutorial() {
+  // チェックボックスの状態を反映
+  const cb = document.getElementById('tutorial-no-show-check');
+  if (cb && cb.checked) {
+    localStorage.setItem(TUTORIAL_KEY, '1');
+  } else {
+    localStorage.removeItem(TUTORIAL_KEY);
+  }
   const overlay = document.getElementById('tutorial-overlay');
   if (overlay) {
-    overlay.style.animation = 'fadeOut 0.2s ease forwards';
     overlay.style.opacity = '0';
     setTimeout(() => overlay.remove(), 200);
   }
-  localStorage.setItem(TUTORIAL_KEY, '1');
   tutorialActive = false;
 }
 
